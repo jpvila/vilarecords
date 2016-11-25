@@ -8,29 +8,28 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.Serializable;
-import java.util.logging.Handler;
 
 import info.abdolahi.CircularMusicProgressBar;
 public class MainActivity extends AppCompatActivity {
     private MediaPlayerService player;
     boolean serviceBound = false;
     CircularMusicProgressBar progressBar;
+    TextView currentTime;
     Thread runner = null;
 
     public BroadcastReceiver myReceiver = new BroadcastReceiver() {
         //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         @Override
         public void onReceive(Context context, Intent intent) {
-            int ola = intent.getIntExtra("NUMBER", 0);
+            int ola = intent.getIntExtra("PORCENTAJE_CURRENT_POSITION", 0);
+
            // pBar.setValue(ola);
             progressBar.setValue(ola);
+            currentTime.setText(intent.getStringExtra("CURRENT_POSITION") + " / " + intent.getStringExtra("DURATION"));
             Log.d("dddReceiver" ,  String.valueOf(ola) );   //can't see
         }
     };
@@ -41,12 +40,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         progressBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
+        currentTime = (TextView) findViewById(R.id.currentTime);
         // set progress to 40%
         progressBar.setValue(0);
 
         IntentFilter filter = new IntentFilter("MY_ACTION");
         registerReceiver(myReceiver, filter);
-        playAudio("https://upload.wikimedia.org/wikipedia/commons/6/6c/Grieg_Lyric_Pieces_Kobold.ogg");
+        playAudio("http://www.salerico.com/recetas/norajones.mp3");
 
     }
 

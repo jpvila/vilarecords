@@ -63,6 +63,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //Invoked indicating buffering status of
         //a media resource being streamed over the network.
         Log.e("percent", "p: " + percent);
+        if(percent == 100){
+            Log.e("FINAL: ", "F: " + mp.getDuration());
+        }
     }
 
     @Override
@@ -152,41 +155,58 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 @Override
                 public void run() {
                     int currentPosition = 0;
+                    int porcentajeTranscurrido= 0;
                     final int total = mediaPlayer.getDuration();
+                    //Log.e("Total: ", "t:" + total);
 
-                    Log.e("current: ", "c:" + total / 1000);
                     while (mediaPlayer.isPlaying()) {
                         try {
                             Thread.sleep(100);
                             currentPosition = mediaPlayer.getCurrentPosition();
+                            Log.e("currentPosition: ", "c:" + currentPosition);
                         } catch (InterruptedException e) {
                             return;
                         } catch (Exception e) {
                             return;
                         }
-                        currentPosition = mediaPlayer.getCurrentPosition();
-                        String finalTimerString = "";
-                        String secondsString = "";
-                        int hours = (int) (currentPosition / (1000 * 60 * 60));
-                        int minutes = (int) (currentPosition % (1000 * 60 * 60)) / (1000 * 60);
-                        int seconds = (int) ((currentPosition % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+                        if(currentPosition <= total) {
+                            porcentajeTranscurrido = getProgressPercentage(currentPosition, total);
+                            String finalTimerString = "";
+                            String secondsString = "";
+                            int hours = (int) (currentPosition / (1000 * 60 * 60));
+                            int minutes = (int) (currentPosition % (1000 * 60 * 60)) / (1000 * 60);
+                            int seconds = (int) ((currentPosition % (1000 * 60 * 60)) % (1000 * 60) / 1000);
 
-                        // Prepending 0 to seconds if it is one digit
-                        if (seconds < 10) {
-                            secondsString = "0" + seconds;
-                        }   else {
-                            secondsString = "" + seconds;
+                            // Prepending 0 to seconds if it is one digit
+                            if (seconds < 10) {
+                                secondsString = "0" + seconds;
+                            } else {
+                                secondsString = "" + seconds;
+                            }
+
+                            finalTimerString = finalTimerString + minutes + ":" + secondsString;
+                            Intent i = new Intent("MY_ACTION");
+                            i.putExtra("PORCENTAJE_CURRENT_POSITION", porcentajeTranscurrido);
+                            i.putExtra("CURRENT_POSITION", finalTimerString);
+
+                            hours = (int) (total / (1000 * 60 * 60));
+                            minutes = (int) (total % (1000 * 60 * 60)) / (1000 * 60);
+                            seconds = (int) ((total % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+
+                            // Prepending 0 to seconds if it is one digit
+                            if (seconds < 10) {
+                                secondsString = "0" + seconds;
+                            } else {
+                                secondsString = "" + seconds;
+                            }
+                            finalTimerString = "";
+                            finalTimerString = finalTimerString + minutes + ":" + secondsString;
+                            i.putExtra("DURATION", finalTimerString);
+
+                            //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
+                            sendBroadcast(i);
                         }
 
-                        finalTimerString = finalTimerString + minutes + ":" + secondsString;
-
-                        Intent i = new Intent("MY_ACTION");
-                        i.putExtra("NUMBER", mediaPlayer.getCurrentPosition() / 1000);
-                        i.putExtra("CURRENT_POSITION", finalTimerString);
-
-                        sendBroadcast(i);
-                        Log.e("currentPos:: ", finalTimerString);
-                        Log.e("current: ", "c:" + mediaPlayer.getCurrentPosition() / 1000);
                     }
                 }
             }).start();
@@ -212,6 +232,19 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
         }
+    }
+
+    public int getProgressPercentage(long currentDuration, long totalDuration){
+        Double percentage = (double) 0;
+
+        long currentSeconds = (int) (currentDuration / 1000);
+        long totalSeconds = (int) (totalDuration / 1000);
+
+        // calculating percentage
+        percentage =(((double)currentSeconds)/totalSeconds)*100;
+
+        // return percentage
+        return percentage.intValue();
     }
 
     private boolean requestAudioFocus() {
