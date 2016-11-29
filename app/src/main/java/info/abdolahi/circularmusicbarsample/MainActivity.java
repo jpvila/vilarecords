@@ -148,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadSongStorage() {
         ContentResolver contentResolver = getContentResolver();
-
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
@@ -195,4 +194,5 @@ public class MainActivity extends AppCompatActivity {
             player.stopSelf();
         }
     }
+
 }
