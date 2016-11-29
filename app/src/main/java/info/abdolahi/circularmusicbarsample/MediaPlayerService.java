@@ -8,6 +8,7 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -117,11 +118,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         switch (focusState) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 // resume playback
+                Toast.makeText(this, "AUDIOFOCUS_GAIN", Toast.LENGTH_SHORT).show();
                 if (mediaPlayer == null) initMediaPlayer();
                 else if (!mediaPlayer.isPlaying()) mediaPlayer.start();
                 mediaPlayer.setVolume(1.0f, 1.0f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
+                Toast.makeText(this, "AUDIOFOCUS_LOSS", Toast.LENGTH_SHORT).show();
                 // Lost focus for an unbounded amount of time: stop playback and release media player
                 if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                 mediaPlayer.release();
@@ -131,11 +134,13 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 // Lost focus for a short time, but we have to stop
                 // playback. We don't release the media player because playback
                 // is likely to resume
+                Toast.makeText(this, "AUDIOFOCUS_LOSS_TRANSIENT", Toast.LENGTH_SHORT).show();
                 if (mediaPlayer.isPlaying()) mediaPlayer.pause();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lost focus for a short time, but it's ok to keep playing
                 // at an attenuated level
+                Toast.makeText(this, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK", Toast.LENGTH_SHORT).show();
                 if (mediaPlayer.isPlaying()) mediaPlayer.setVolume(0.1f, 0.1f);
                 break;
         }
@@ -185,7 +190,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                             }
 
                             finalTimerString = finalTimerString + minutes + ":" + secondsString;
-                            Intent i = new Intent("MY_ACTION");
+                            Intent i = new Intent("BRODCAST_PORCENTAJE_CURRENT_POSITION");
                             i.putExtra("PORCENTAJE_CURRENT_POSITION", porcentajeTranscurrido);
                             i.putExtra("CURRENT_POSITION", finalTimerString);
 
@@ -220,7 +225,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
-    private void pauseMedia() {
+    public void pauseMedia() {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
             resumePosition = mediaPlayer.getCurrentPosition();
