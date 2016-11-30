@@ -19,6 +19,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,9 +34,12 @@ public class MainActivity extends AppCompatActivity {
     TextView currentTime;
     Thread runner = null;
     ArrayList<Audio> audioList;
-
+    TextView albumSong;
+    TextView albumGroup;
+    static public int audioIndex = 0;
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 0;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNewAudio";
+    public static final String Broadcast_PLAY_NEXT_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNextAudio";
     // Change to your package name
 
     public BroadcastReceiver myReceiverPorcentajeCurrentTime = new BroadcastReceiver() {
@@ -57,23 +62,36 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         currentTime = (TextView) findViewById(R.id.currentTime);
-        TextView albumSong= (TextView) findViewById(R.id.album_song);
-        TextView albumGroup= (TextView) findViewById(R.id.album_group);
+        albumSong= (TextView) findViewById(R.id.album_song);
+        albumGroup= (TextView) findViewById(R.id.album_group);
         // set progress to 40%
-        progressBar.setValue(0);
+
+        ImageButton boton_next_album_song = (ImageButton) findViewById(R.id.boton_next_album_song);
+        boton_next_album_song.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                //Service is active
+                //Send a broadcast to the service -> PLAY_NEW_AUDIO
+//                Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT_AUDIO);
+//                sendBroadcast(broadcastIntent);
+                audioIndex++;
+                new StorageUtil(getApplicationContext()).storeAudioIndex(MainActivity.audioIndex);
+                progressBar.setValueInit(0);
+                playAudio(audioIndex);
+            }
+        });
 
         IntentFilter filter = new IntentFilter("BRODCAST_PORCENTAJE_CURRENT_POSITION");
         registerReceiver(myReceiverPorcentajeCurrentTime, filter);
 
         loadAudio();
 
-        //Setear los atributos del tema en el layout
-        albumSong.setText(audioList.get(3).getTitle());
-        albumGroup.setText(audioList.get(3).getArtist());
 
         //playAudio(audioList.get(3).getData());
-        playAudio(1);
+        playAudio(0);
         //playAudio("http://www.salerico.com/recetas/norajones.mp3");
+
 
     }
 
@@ -110,6 +128,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void playAudio(int audioIndex) {
         //Check is service is active
+        //Setear los atributos del tema en el layout
+        progressBar.setValue(0);
+        albumSong.setText(audioList.get(audioIndex).getTitle());
+        albumGroup.setText(audioList.get(audioIndex).getArtist());
+
         if (!serviceBound) {
             //Store Serializable audioList to SharedPreferences
             StorageUtil storage = new StorageUtil(getApplicationContext());
@@ -224,5 +247,6 @@ public class MainActivity extends AppCompatActivity {
             unregisterReceiver(myReceiverPorcentajeCurrentTime);
         }
     }
+
 
 }

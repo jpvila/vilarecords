@@ -78,8 +78,7 @@
             android:background="@null"
             android:src="@drawable/ic_pause_circle_outline_black_24dp__2_" />
 
-        <ImageButton
-            android:id="@+id/next"
+        <ImageButton android:id="@+id/boton_next_album_song"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"

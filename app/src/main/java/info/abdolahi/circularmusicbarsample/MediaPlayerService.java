@@ -63,7 +63,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     //List of available Audio files
     private ArrayList<Audio> audioList;
-    private int audioIndex = -1;
+
     private Audio activeAudio; //an object on the currently playing audio
 
 
@@ -94,6 +94,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerBecomingNoisyReceiver();
         //Listen for new Audio to play -- BroadcastReceiver
         register_playNewAudio();
+        //Listen for next Audio to play -- BroadcastReceiver
+        register_playNextAudio();
+
     }
 
     //The system calls this method when an activity, requests the service be started
@@ -104,11 +107,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             //Load data from SharedPreferences
             StorageUtil storage = new StorageUtil(getApplicationContext());
             audioList = storage.loadAudio();
-            audioIndex = storage.loadAudioIndex();
+            MainActivity.audioIndex = storage.loadAudioIndex();
 
-            if (audioIndex != -1 && audioIndex < audioList.size()) {
+            if (MainActivity.audioIndex != -1 && MainActivity.audioIndex < audioList.size()) {
                 //index is in a valid range
-                activeAudio = audioList.get(audioIndex);
+                activeAudio = audioList.get(MainActivity.audioIndex);
             } else {
                 stopSelf();
             }
@@ -414,17 +417,17 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void skipToNext() {
 
-        if (audioIndex == audioList.size() - 1) {
+        if (MainActivity.audioIndex == audioList.size() - 1) {
             //if last in playlist
-            audioIndex = 0;
-            activeAudio = audioList.get(audioIndex);
+            MainActivity.audioIndex = 0;
+            activeAudio = audioList.get(MainActivity.audioIndex);
         } else {
             //get next in playlist
-            activeAudio = audioList.get(++audioIndex);
+            activeAudio = audioList.get(++MainActivity.audioIndex);
         }
 
         //Update stored index
-        new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
+        new StorageUtil(getApplicationContext()).storeAudioIndex(MainActivity.audioIndex);
 
         stopMedia();
         //reset mediaPlayer
@@ -434,18 +437,18 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
     private void skipToPrevious() {
 
-        if (audioIndex == 0) {
+        if (MainActivity.audioIndex == 0) {
             //if first in playlist
             //set index to the last of audioList
-            audioIndex = audioList.size() - 1;
-            activeAudio = audioList.get(audioIndex);
+            MainActivity.audioIndex = audioList.size() - 1;
+            activeAudio = audioList.get(MainActivity.audioIndex);
         } else {
             //get previous in playlist
-            activeAudio = audioList.get(--audioIndex);
+            activeAudio = audioList.get(--MainActivity.audioIndex);
         }
 
         //Update stored index
-        new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
+        new StorageUtil(getApplicationContext()).storeAudioIndex(MainActivity.audioIndex);
 
         stopMedia();
         //reset mediaPlayer
@@ -558,7 +561,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 updateMetaData();
                 try {
                     buildNotification(PlaybackStatus.PLAYING);
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
@@ -710,10 +713,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         public void onReceive(Context context, Intent intent) {
 
             //Get the new media index form SharedPreferences
-            audioIndex = new StorageUtil(getApplicationContext()).loadAudioIndex();
-            if (audioIndex != -1 && audioIndex < audioList.size()) {
+            MainActivity.audioIndex = new StorageUtil(getApplicationContext()).loadAudioIndex();
+            if (MainActivity.audioIndex != -1 && MainActivity.audioIndex < audioList.size()) {
                 //index is in a valid range
-                activeAudio = audioList.get(audioIndex);
+                activeAudio = audioList.get(MainActivity.audioIndex);
             } else {
                 stopSelf();
             }
@@ -724,7 +727,11 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
             mediaPlayer.reset();
             initMediaPlayer();
             updateMetaData();
-            buildNotification(PlaybackStatus.PLAYING);
+            try {
+                buildNotification(PlaybackStatus.PLAYING);
+            } catch (Exception e)  {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -734,5 +741,29 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         registerReceiver(playNewAudio, filter);
     }
 
+
+    /**
+     * Play next Audio
+     */
+    private BroadcastReceiver playNextAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            skipToPrevious();
+       //     updateMetaData();
+            /*
+            try {
+                buildNotification(PlaybackStatus.PLAYING);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            */
+        }
+    };
+
+    private void register_playNextAudio() {
+        //Register playNewMedia receiver
+        IntentFilter filter = new IntentFilter(MainActivity.Broadcast_PLAY_NEXT_AUDIO);
+        registerReceiver(playNextAudio, filter);
+    }
 
 }
