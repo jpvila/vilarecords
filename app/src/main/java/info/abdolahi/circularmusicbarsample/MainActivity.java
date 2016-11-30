@@ -32,8 +32,12 @@ public class MainActivity extends AppCompatActivity {
     TextView currentTime;
     Thread runner = null;
     ArrayList<Audio> audioList;
+
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 0;
-    public BroadcastReceiver myReceiver = new BroadcastReceiver() {
+    public static final String Broadcast_PLAY_NEW_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNewAudio";
+    // Change to your package name
+
+    public BroadcastReceiver myReceiverPorcentajeCurrentTime = new BroadcastReceiver() {
         //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -59,15 +63,16 @@ public class MainActivity extends AppCompatActivity {
         progressBar.setValue(0);
 
         IntentFilter filter = new IntentFilter("BRODCAST_PORCENTAJE_CURRENT_POSITION");
-        registerReceiver(myReceiver, filter);
-        //playAudio("http://www.salerico.com/recetas/norajones.mp3");
+        registerReceiver(myReceiverPorcentajeCurrentTime, filter);
+
         loadAudio();
-        //play the first audio in the ArrayList
 
         //Setear los atributos del tema en el layout
         albumSong.setText(audioList.get(3).getTitle());
         albumGroup.setText(audioList.get(3).getArtist());
-        playAudio(audioList.get(3).getData());
+
+        //playAudio(audioList.get(3).getData());
+        playAudio(1);
         //playAudio("http://www.salerico.com/recetas/norajones.mp3");
 
     }
@@ -103,6 +108,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void playAudio(int audioIndex) {
+        //Check is service is active
+        if (!serviceBound) {
+            //Store Serializable audioList to SharedPreferences
+            StorageUtil storage = new StorageUtil(getApplicationContext());
+            storage.storeAudio(audioList);
+            storage.storeAudioIndex(audioIndex);
+
+            Intent playerIntent = new Intent(this, MediaPlayerService.class);
+            startService(playerIntent);
+            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        } else {
+            //Store the new audioIndex to SharedPreferences
+            StorageUtil storage = new StorageUtil(getApplicationContext());
+            storage.storeAudioIndex(audioIndex);
+
+            //Service is active
+            //Send a broadcast to the service -> PLAY_NEW_AUDIO
+            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
+            sendBroadcast(broadcastIntent);
+        }
+    }
     private void loadAudio() {
         if (Build.VERSION.SDK_INT >= 23){
             if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) !=PackageManager.PERMISSION_GRANTED){
@@ -192,6 +219,9 @@ public class MainActivity extends AppCompatActivity {
             unbindService(serviceConnection);
             //service is active
             player.stopSelf();
+
+            //Desregistro el receiver del porcentaje
+            unregisterReceiver(myReceiverPorcentajeCurrentTime);
         }
     }
 
