@@ -21,6 +21,7 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.ImageView;
 
 import info.abdolahi.circularmusicbarsample.R;
@@ -177,7 +178,7 @@ public class CircularMusicProgressBar extends ImageView {
     public void setValue(float newValue) {
 
         if (animationState) {
-
+            Log.e("animationState: ", "true");
             if (mValueAnimator.isRunning()) {
                 mValueAnimator.cancel();
             }
@@ -185,6 +186,7 @@ public class CircularMusicProgressBar extends ImageView {
             mValueAnimator.setFloatValues(mProgressValue, newValue);
             mValueAnimator.start();
         } else {
+            Log.e("mProgressValue: ", "mP: " + newValue);
             mProgressValue = newValue;
             invalidate();
         }
@@ -192,6 +194,7 @@ public class CircularMusicProgressBar extends ImageView {
     }
 
     public void setValueInit(float newValue) {
+          Log.e("SetValueInit: ", "D:" + newValue);
           mProgressValue = newValue;
           invalidate();
     }

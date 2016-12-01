@@ -41,7 +41,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_PREVIOUS = "com.valdioveliu.valdio.audioplayer.ACTION_PREVIOUS";
     public static final String ACTION_NEXT = "com.valdioveliu.valdio.audioplayer.ACTION_NEXT";
     public static final String ACTION_STOP = "com.valdioveliu.valdio.audioplayer.ACTION_STOP";
-
+    private boolean animation = true;
     private MediaPlayer mediaPlayer;
 
     //MediaSession
@@ -372,7 +372,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                             i.putExtra("DURATION", finalTimerString);
 
                             //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
-                            sendBroadcast(i);
+                            if(animation) {
+                                sendBroadcast(i);
+                            }
                         }
 
                     }
@@ -564,6 +566,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                Intent i = new Intent("BRODCAST_DATOS_CANCION");
+                i.putExtra("ALBUM_SONG", activeAudio.getTitle());
+                //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
+                sendBroadcast(i);
+
             }
 
             @Override

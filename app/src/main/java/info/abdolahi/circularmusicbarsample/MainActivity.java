@@ -51,7 +51,17 @@ public class MainActivity extends AppCompatActivity {
            // pBar.setValue(ola);
             progressBar.setValue(ola);
             currentTime.setText(intent.getStringExtra("CURRENT_POSITION") + " / " + intent.getStringExtra("DURATION"));
-            Log.d("dddReceiver" ,  String.valueOf(ola) );   //can't see
+
+        }
+    };
+
+    public BroadcastReceiver myReceiverNextSongFromNotification = new BroadcastReceiver() {
+        //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            inicializarProgressReproductor();
+            String albumSongString = intent.getStringExtra("ALBUM_SONG");
+            albumSong.setText(albumSongString);
         }
     };
 
@@ -77,13 +87,17 @@ public class MainActivity extends AppCompatActivity {
 //                sendBroadcast(broadcastIntent);
                 audioIndex++;
                 new StorageUtil(getApplicationContext()).storeAudioIndex(MainActivity.audioIndex);
-                progressBar.setValueInit(0);
+                inicializarProgressReproductor();
                 playAudio(audioIndex);
+
             }
         });
 
         IntentFilter filter = new IntentFilter("BRODCAST_PORCENTAJE_CURRENT_POSITION");
         registerReceiver(myReceiverPorcentajeCurrentTime, filter);
+
+        IntentFilter filterDatosCancion = new IntentFilter("BRODCAST_DATOS_CANCION");
+        registerReceiver(myReceiverNextSongFromNotification, filterDatosCancion);
 
         loadAudio();
 
@@ -93,6 +107,11 @@ public class MainActivity extends AppCompatActivity {
         //playAudio("http://www.salerico.com/recetas/norajones.mp3");
 
 
+    }
+
+    private void inicializarProgressReproductor() {
+        progressBar.setValueInit(0);
+        progressBar.setValue(0);
     }
 
     //Binding this Client to the AudioPlayer Service
@@ -129,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
     private void playAudio(int audioIndex) {
         //Check is service is active
         //Setear los atributos del tema en el layout
-        progressBar.setValue(0);
         albumSong.setText(audioList.get(audioIndex).getTitle());
         albumGroup.setText(audioList.get(audioIndex).getArtist());
 
