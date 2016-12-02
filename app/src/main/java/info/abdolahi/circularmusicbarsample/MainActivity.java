@@ -36,22 +36,33 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Audio> audioList;
     TextView albumSong;
     TextView albumGroup;
+    ImageButton playPause;
+    ImageButton playResume;
     static public int audioIndex = 0;
+    static public boolean isPlaying = true;
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 0;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNewAudio";
     public static final String Broadcast_PLAY_NEXT_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNextAudio";
+
     // Change to your package name
 
     public BroadcastReceiver myReceiverPorcentajeCurrentTime = new BroadcastReceiver() {
         //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         @Override
         public void onReceive(Context context, Intent intent) {
-            int ola = intent.getIntExtra("PORCENTAJE_CURRENT_POSITION", 0);
-
+            int porcentajeCurrentPosition = intent.getIntExtra("PORCENTAJE_CURRENT_POSITION", 0);
            // pBar.setValue(ola);
-            progressBar.setValue(ola);
+            progressBar.setValue(porcentajeCurrentPosition);
             currentTime.setText(intent.getStringExtra("CURRENT_POSITION") + " / " + intent.getStringExtra("DURATION"));
 
+        }
+    };
+
+    public BroadcastReceiver myReceiverCambiarIconoPlayAndPause = new BroadcastReceiver() {
+        //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean is_playing = intent.getBooleanExtra("IS_PLAYING", false);
         }
     };
 
@@ -74,11 +85,11 @@ public class MainActivity extends AppCompatActivity {
         currentTime = (TextView) findViewById(R.id.currentTime);
         albumSong= (TextView) findViewById(R.id.album_song);
         albumGroup= (TextView) findViewById(R.id.album_group);
+
         // set progress to 40%
 
         ImageButton boton_next_album_song = (ImageButton) findViewById(R.id.boton_next_album_song);
         boton_next_album_song.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 //Service is active
@@ -93,11 +104,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        playResume = (ImageButton) findViewById(R.id.play_resume);
+        playResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarImagenResumeToPause();
+            }
+        });
+
+        playPause = (ImageButton) findViewById(R.id.play_pause);
+        playPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarImagenResumeToPause();
+            }
+        });
+
         IntentFilter filter = new IntentFilter("BRODCAST_PORCENTAJE_CURRENT_POSITION");
         registerReceiver(myReceiverPorcentajeCurrentTime, filter);
 
         IntentFilter filterDatosCancion = new IntentFilter("BRODCAST_DATOS_CANCION");
         registerReceiver(myReceiverNextSongFromNotification, filterDatosCancion);
+
+        IntentFilter filterIsPlaying = new IntentFilter("BRODCAST_IS_PLAYING");
+        registerReceiver(myReceiverCambiarIconoPlayAndPause, filterIsPlaying);
 
         loadAudio();
 
@@ -107,6 +137,18 @@ public class MainActivity extends AppCompatActivity {
         //playAudio("http://www.salerico.com/recetas/norajones.mp3");
 
 
+    }
+
+    private void cambiarImagenResumeToPause() {
+        if(isPlaying){
+            playPause.setVisibility(View.VISIBLE);
+            playResume.setVisibility(View.GONE);
+            isPlaying = false;
+        } else{
+            playPause.setVisibility(View.GONE);
+            playResume.setVisibility(View.VISIBLE);
+            isPlaying = true;
+        }
     }
 
     private void inicializarProgressReproductor() {

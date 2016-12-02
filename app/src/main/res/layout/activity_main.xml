@@ -72,9 +72,18 @@
             android:src="@drawable/ic_fast_rewind_black_24dp" />
 
         <ImageButton
-            android:id="@+id/play"
+            android:id="@+id/play_resume"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@null"
+            android:visibility="visible"
+            android:src="@drawable/ic_play_circle_outline_black_24dp" />
+
+        <ImageButton
+            android:id="@+id/play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
             android:background="@null"
             android:src="@drawable/ic_pause_circle_outline_black_24dp__2_" />
 

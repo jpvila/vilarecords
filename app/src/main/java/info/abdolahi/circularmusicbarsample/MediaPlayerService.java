@@ -41,7 +41,6 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_PREVIOUS = "com.valdioveliu.valdio.audioplayer.ACTION_PREVIOUS";
     public static final String ACTION_NEXT = "com.valdioveliu.valdio.audioplayer.ACTION_NEXT";
     public static final String ACTION_STOP = "com.valdioveliu.valdio.audioplayer.ACTION_STOP";
-    private boolean animation = true;
     private MediaPlayer mediaPlayer;
 
     //MediaSession
@@ -319,68 +318,70 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
     private void playMedia() {
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.start();
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    int currentPosition = 0;
-                    int porcentajeTranscurrido= 0;
-                    final int total = mediaPlayer.getDuration();
-                    //Log.e("Total: ", "t:" + total);
-
-                    while (mediaPlayer.isPlaying()) {
-                        try {
-                            Thread.sleep(100);
-                            currentPosition = mediaPlayer.getCurrentPosition();
-                            Log.e("currentPosition: ", "c:" + currentPosition);
-                        } catch (InterruptedException e) {
-                            return;
-                        } catch (Exception e) {
-                            return;
-                        }
-                        if(currentPosition <= total) {
-                            porcentajeTranscurrido = getProgressPercentage(currentPosition, total);
-                            String finalTimerString = "";
-                            String secondsString = "";
-                            int hours = (int) (currentPosition / (1000 * 60 * 60));
-                            int minutes = (int) (currentPosition % (1000 * 60 * 60)) / (1000 * 60);
-                            int seconds = (int) ((currentPosition % (1000 * 60 * 60)) % (1000 * 60) / 1000);
-
-                            // Prepending 0 to seconds if it is one digit
-                            if (seconds < 10) {
-                                secondsString = "0" + seconds;
-                            } else {
-                                secondsString = "" + seconds;
-                            }
-
-                            finalTimerString = finalTimerString + minutes + ":" + secondsString;
-                            Intent i = new Intent("BRODCAST_PORCENTAJE_CURRENT_POSITION");
-                            i.putExtra("PORCENTAJE_CURRENT_POSITION", porcentajeTranscurrido);
-                            i.putExtra("CURRENT_POSITION", finalTimerString);
-
-                            hours = (int) (total / (1000 * 60 * 60));
-                            minutes = (int) (total % (1000 * 60 * 60)) / (1000 * 60);
-                            seconds = (int) ((total % (1000 * 60 * 60)) % (1000 * 60) / 1000);
-
-                            // Prepending 0 to seconds if it is one digit
-                            if (seconds < 10) {
-                                secondsString = "0" + seconds;
-                            } else {
-                                secondsString = "" + seconds;
-                            }
-                            finalTimerString = "";
-                            finalTimerString = finalTimerString + minutes + ":" + secondsString;
-                            i.putExtra("DURATION", finalTimerString);
-
-                            //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
-                            if(animation) {
-                                sendBroadcast(i);
-                            }
-                        }
-
-                    }
-                }
-            }).start();
+            iniciaCirculoProgress();
         }
+    }
+
+    private void iniciaCirculoProgress() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int currentPosition = 0;
+                int porcentajeTranscurrido= 0;
+                final int total = mediaPlayer.getDuration();
+                //Log.e("Total: ", "t:" + total);
+
+                while (mediaPlayer.isPlaying()) {
+                    try {
+                        Thread.sleep(100);
+                        currentPosition = mediaPlayer.getCurrentPosition();
+                        Log.e("currentPosition: ", "c:" + currentPosition);
+                    } catch (InterruptedException e) {
+                        return;
+                    } catch (Exception e) {
+                        return;
+                    }
+                    if(currentPosition <= total) {
+                        porcentajeTranscurrido = getProgressPercentage(currentPosition, total);
+                        String finalTimerString = "";
+                        String secondsString = "";
+                        int hours = (int) (currentPosition / (1000 * 60 * 60));
+                        int minutes = (int) (currentPosition % (1000 * 60 * 60)) / (1000 * 60);
+                        int seconds = (int) ((currentPosition % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+
+                        // Prepending 0 to seconds if it is one digit
+                        if (seconds < 10) {
+                            secondsString = "0" + seconds;
+                        } else {
+                            secondsString = "" + seconds;
+                        }
+
+                        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+                        Intent i = new Intent("BRODCAST_PORCENTAJE_CURRENT_POSITION");
+                        i.putExtra("PORCENTAJE_CURRENT_POSITION", porcentajeTranscurrido);
+                        i.putExtra("CURRENT_POSITION", finalTimerString);
+
+                        hours = (int) (total / (1000 * 60 * 60));
+                        minutes = (int) (total % (1000 * 60 * 60)) / (1000 * 60);
+                        seconds = (int) ((total % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+
+                        // Prepending 0 to seconds if it is one digit
+                        if (seconds < 10) {
+                            secondsString = "0" + seconds;
+                        } else {
+                            secondsString = "" + seconds;
+                        }
+                        finalTimerString = "";
+                        finalTimerString = finalTimerString + minutes + ":" + secondsString;
+                        i.putExtra("DURATION", finalTimerString);
+
+                        //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
+                        sendBroadcast(i);
+                    }
+
+                }
+            }
+        }).start();
     }
 
     public int getProgressPercentage(long currentDuration, long totalDuration){
@@ -414,6 +415,7 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.seekTo(resumePosition);
             mediaPlayer.start();
+            iniciaCirculoProgress();
         }
     }
 
@@ -544,7 +546,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 super.onPlay();
 
                 resumeMedia();
-                buildNotification(PlaybackStatus.PLAYING);
+                try {
+                    buildNotification(PlaybackStatus.PLAYING);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                cambiarBotonPausePlay(true);
             }
 
             @Override
@@ -552,7 +559,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 super.onPause();
 
                 pauseMedia();
-                buildNotification(PlaybackStatus.PAUSED);
+                try {
+                    buildNotification(PlaybackStatus.PAUSED);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                cambiarBotonPausePlay(false);
             }
 
             @Override
@@ -596,6 +608,12 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 super.onSeekTo(position);
             }
         });
+    }
+
+    private void cambiarBotonPausePlay(boolean isPlaying) {
+        Intent i = new Intent("BRODCAST_IS_PLAYING");
+        i.putExtra("IS_PLAYING", isPlaying);
+        sendBroadcast(i);
     }
 
     private void updateMetaData() {
