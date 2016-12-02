@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 0;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNewAudio";
     public static final String Broadcast_PLAY_NEXT_AUDIO = "com.valdioveliu.valdio.audioplayer.PlayNextAudio";
+    public static final String Broadcast_PAUSE_AUDIO = "com.valdioveliu.valdio.audioplayer.PauseAudio";
+    public static final String Broadcast_RESUME_AUDIO = "com.valdioveliu.valdio.audioplayer.ResumeAudio";
 
     // Change to your package name
 
@@ -62,17 +64,27 @@ public class MainActivity extends AppCompatActivity {
         //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean is_playing = intent.getBooleanExtra("IS_PLAYING", false);
+            isPlaying = intent.getBooleanExtra("IS_PLAYING", false);
+            cambiarImagenResumeToPause();
         }
     };
 
-    public BroadcastReceiver myReceiverNextSongFromNotification = new BroadcastReceiver() {
+    public BroadcastReceiver myReceiverAccionesReproductor = new BroadcastReceiver() {
         //CircularMusicProgressBar pBar = (CircularMusicProgressBar) findViewById(R.id.album_art);
         @Override
         public void onReceive(Context context, Intent intent) {
-            inicializarProgressReproductor();
-            String albumSongString = intent.getStringExtra("ALBUM_SONG");
-            albumSong.setText(albumSongString);
+            String accion = intent.getStringExtra("BRODCAST_ACCIONES_REPRODUCTOR");
+            if("AVANZAR_SIGUIENTE_CANCION".equals(accion)) {
+                inicializarProgressReproductor();
+                String albumSongString = intent.getStringExtra("ALBUM_SONG");
+                albumSong.setText(albumSongString);
+            }
+            if("RETROCEDER_CANCION".equals(accion)) {
+                inicializarProgressReproductor();
+                String albumSongString = intent.getStringExtra("ALBUM_SONG");
+                albumSong.setText(albumSongString);
+            }
+
         }
     };
 
@@ -104,11 +116,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        ImageButton boton_previous_album_song = (ImageButton) findViewById(R.id.boton_previous_album_song);
+        boton_previous_album_song.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                audioIndex--;
+                new StorageUtil(getApplicationContext()).storeAudioIndex(MainActivity.audioIndex);
+                inicializarProgressReproductor();
+                playAudio(audioIndex);
+
+            }
+        });
+
         playResume = (ImageButton) findViewById(R.id.play_resume);
         playResume.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 cambiarImagenResumeToPause();
+                Intent broadcastIntent = new Intent(Broadcast_RESUME_AUDIO);
+                sendBroadcast(broadcastIntent);
             }
         });
 
@@ -117,14 +143,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 cambiarImagenResumeToPause();
+                Intent broadcastIntent = new Intent(Broadcast_PAUSE_AUDIO);
+                sendBroadcast(broadcastIntent);
             }
         });
 
         IntentFilter filter = new IntentFilter("BRODCAST_PORCENTAJE_CURRENT_POSITION");
         registerReceiver(myReceiverPorcentajeCurrentTime, filter);
 
-        IntentFilter filterDatosCancion = new IntentFilter("BRODCAST_DATOS_CANCION");
-        registerReceiver(myReceiverNextSongFromNotification, filterDatosCancion);
+        IntentFilter filterDatosCancion = new IntentFilter("BRODCAST_ACCIONES_REPRODUCTOR");
+        registerReceiver(myReceiverAccionesReproductor, filterDatosCancion);
 
         IntentFilter filterIsPlaying = new IntentFilter("BRODCAST_IS_PLAYING");
         registerReceiver(myReceiverCambiarIconoPlayAndPause, filterIsPlaying);
@@ -141,12 +169,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void cambiarImagenResumeToPause() {
         if(isPlaying){
-            playPause.setVisibility(View.VISIBLE);
-            playResume.setVisibility(View.GONE);
-            isPlaying = false;
-        } else{
             playPause.setVisibility(View.GONE);
             playResume.setVisibility(View.VISIBLE);
+            isPlaying = false;
+        } else{
+            playPause.setVisibility(View.VISIBLE);
+            playResume.setVisibility(View.GONE);
             isPlaying = true;
         }
     }

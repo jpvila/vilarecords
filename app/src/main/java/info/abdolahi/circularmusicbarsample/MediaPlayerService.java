@@ -95,7 +95,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         register_playNewAudio();
         //Listen for next Audio to play -- BroadcastReceiver
         register_playNextAudio();
-
+        //Listen for pause Audio -- BroadcastReceiver
+        register_pauseAudio();
+        //Listen for resume Audio -- BroadcastReceiver
+        register_resumeAudio();
     }
 
     //The system calls this method when an activity, requests the service be started
@@ -548,10 +551,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 resumeMedia();
                 try {
                     buildNotification(PlaybackStatus.PLAYING);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-                cambiarBotonPausePlay(true);
+                cambiarBotonPausePlay(false);
             }
 
             @Override
@@ -561,10 +564,10 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                 pauseMedia();
                 try {
                     buildNotification(PlaybackStatus.PAUSED);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-                cambiarBotonPausePlay(false);
+                cambiarBotonPausePlay(true);
             }
 
             @Override
@@ -579,8 +582,9 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
                     e.printStackTrace();
                 }
 
-                Intent i = new Intent("BRODCAST_DATOS_CANCION");
+                Intent i = new Intent("BRODCAST_ACCIONES_REPRODUCTOR");
                 i.putExtra("ALBUM_SONG", activeAudio.getTitle());
+                i.putExtra("ACCION", "AVANZAR_SIGUIENTE_CANCION");
                 //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
                 sendBroadcast(i);
 
@@ -592,7 +596,16 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
 
                 skipToPrevious();
                 updateMetaData();
-                buildNotification(PlaybackStatus.PLAYING);
+                try {
+                    buildNotification(PlaybackStatus.PLAYING);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Intent i = new Intent("BRODCAST_ACCIONES_REPRODUCTOR");
+                i.putExtra("ALBUM_SONG", activeAudio.getTitle());
+                i.putExtra("ACCION", "RETROCEDER_CANCION");
+                //Log.e("porcentaje: ", "P:" + porcentajeTranscurrido);
+                sendBroadcast(i);
             }
 
             @Override
@@ -790,6 +803,43 @@ public class MediaPlayerService extends Service implements MediaPlayer.OnComplet
         //Register playNewMedia receiver
         IntentFilter filter = new IntentFilter(MainActivity.Broadcast_PLAY_NEXT_AUDIO);
         registerReceiver(playNextAudio, filter);
+    }
+
+
+    private BroadcastReceiver pauseAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            pauseMedia();
+            try {
+                buildNotification(PlaybackStatus.PAUSED);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private void register_pauseAudio() {
+        //Register playNewMedia receiver
+        IntentFilter filter = new IntentFilter(MainActivity.Broadcast_PAUSE_AUDIO);
+        registerReceiver(pauseAudio, filter);
+    }
+
+    private BroadcastReceiver resumeAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            resumeMedia();
+            try {
+                buildNotification(PlaybackStatus.PLAYING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
+    private void register_resumeAudio() {
+        //Register playNewMedia receiver
+        IntentFilter filter = new IntentFilter(MainActivity.Broadcast_RESUME_AUDIO);
+        registerReceiver(resumeAudio, filter);
     }
 
 }
